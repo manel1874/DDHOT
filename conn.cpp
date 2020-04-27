@@ -190,17 +190,49 @@ int main(int argc, char* argv[]){
         shared_ptr<GroupElement> m1 = dlog->createRandomElement();
 
         // Encrypt m0
-        //Generate s and t
+        //Generate s0 and t0
         shared_ptr<PrgFromOpenSSLAES> gen = get_seeded_prg();
-        biginteger s = getRandomInRange(0, p-1, gen.get());
-        biginteger t = getRandomInRange(0, p-1, gen.get());
+        biginteger s0 = getRandomInRange(0, p-1, gen.get());
+        biginteger t0 = getRandomInRange(0, p-1, gen.get());
         // define u0
-        auto g0_s = dlog->exponentiate(crs_sent[0].get(), s);
-        auto h0_t = dlog->exponentiate(crs_sent[2].get(), t);
+        auto g0_s0 = dlog->exponentiate(crs_sent[0].get(), s0);
+        auto h0_t0 = dlog->exponentiate(crs_sent[2].get(), t0);
+        auto u0 = dlog->multiplyGroupElements(g0_s0.get(), h0_t0.get());
+        //define v0
+        auto gsig_s0 = dlog->exponentiate(pk_received[0].get(), s0);
+        auto hsig_t0 = dlog->exponentiate(pk_received[1].get(), t0);
+        auto v0 = dlog->multiplyGroupElements(gsig_s0.get(), hsig_t0.get());
+        // define v0_m0
+        auto v0_m0 = dlog->multiplyGroupElements(v0.get(), m0.get());
 
+        // Encrypt m1
+        //Generate s1 and t1
+        shared_ptr<PrgFromOpenSSLAES> gen = get_seeded_prg();
+        biginteger s1 = getRandomInRange(0, p-1, gen.get());
+        biginteger t1 = getRandomInRange(0, p-1, gen.get());
+        // define u1
+        auto g1_s1 = dlog->exponentiate(crs_sent[1].get(), s1);
+        auto h1_t1 = dlog->exponentiate(crs_sent[3].get(), t1);
+        auto u1 = dlog->multiplyGroupElements(g1_s1.get(), h1_t1.get());
+        //define v1
+        auto gsig_s1 = dlog->exponentiate(pk_received[0].get(), s1);
+        auto hsig_t1 = dlog->exponentiate(pk_received[1].get(), t1);
+        auto v1 = dlog->multiplyGroupElements(gsig_s1.get(), hsig_t1.get());
+        // define v1_m1
+        auto v1_m1 = dlog->multiplyGroupElements(v1.get(), m1.get());
 
+        // send y0 = (u0, v0_m0) and y1 = (u1, v1_m1)
+        shared_ptr<GroupElement> Y[4] = {u0, v0_m0, u1, v1_m1};
+        for (shared_ptr<GroupElement> elem : Y){
+            auto elem_send = elem->generateSendableData();
+            auto elem_sendStr = elem_send->toString();
+            channel->writeWithSize(elem_sendStr);
+        }
+
+        cout << "\nMy first message, m0: " << m0.get();
+        cout << "\nMy second message, m1: " << m1.get();
+    
     }
-
 
 
     // Final decryption
