@@ -16,7 +16,7 @@ int main(int argc, char* argv[]){
     }
 
     /**
-    sender inputs: [0] [setup type: 0 (messy), 1 (decryption)] [input0] [input 1]
+    sender inputs: [0] [setup type: 0 (messy), 1 (decryption)] 
     receiver inputs: [1] [element choice: 0, 1] 
 
     **/
@@ -63,7 +63,10 @@ int main(int argc, char* argv[]){
             auto h0 = dlog->exponentiate(g0.get(), r0);
             auto h1 = dlog->exponentiate(g1.get(), r1);
 
-            shared_ptr<GroupElement> crs_sent[4] = {g0, h0, g1, h1};
+            crs_sent.push_back(g0);
+            crs_sent.push_back(h0);
+            crs_sent.push_back(g1);
+            crs_sent.push_back(h1);
 
             /**
             // send CRS elements to receiver
@@ -96,7 +99,10 @@ int main(int argc, char* argv[]){
             auto h0 = dlog->exponentiate(g0.get(), x);
             auto h1 = dlog->exponentiate(g1.get(), x);
 
-            shared_ptr<GroupElement> crs_sent[4] = {g0, h0, g1, h1};
+            crs_sent.push_back(g0);
+            crs_sent.push_back(h0);
+            crs_sent.push_back(g1);
+            crs_sent.push_back(h1);
 
             /**
             // send one group element to receiver
@@ -144,16 +150,14 @@ int main(int argc, char* argv[]){
 
             crs_received.push_back(crs_elem);
         }
-        
 
     }
 
     // First computation part
     if(atoi(argv[1]) == 1){ // receiver computation (prepare keys )
-
         // key generation
         shared_ptr<PrgFromOpenSSLAES> gen = get_seeded_prg();
-        biginteger r = getRandomInRange(0, p-1, gen.get());
+        r = getRandomInRange(0, p-1, gen.get());
 
         auto g_sigma = crs_received[2 * atoi(argv[2])];
         auto h_sigma = crs_received[2 * atoi(argv[2]) + 1];
@@ -193,12 +197,12 @@ int main(int argc, char* argv[]){
 
         // Encrypt m0
         //Generate s0 and t0
-        shared_ptr<PrgFromOpenSSLAES> gen = get_seeded_prg();
-        biginteger s0 = getRandomInRange(0, p-1, gen.get());
-        biginteger t0 = getRandomInRange(0, p-1, gen.get());
+        shared_ptr<PrgFromOpenSSLAES> gen_encm0 = get_seeded_prg();
+        biginteger s0 = getRandomInRange(0, p-1, gen_encm0.get());
+        biginteger t0 = getRandomInRange(0, p-1, gen_encm0.get());
         // define u0
         auto g0_s0 = dlog->exponentiate(crs_sent[0].get(), s0);
-        auto h0_t0 = dlog->exponentiate(crs_sent[2].get(), t0);
+        auto h0_t0 = dlog->exponentiate(crs_sent[1].get(), t0);
         auto u0 = dlog->multiplyGroupElements(g0_s0.get(), h0_t0.get());
         //define v0
         auto gsig_s0 = dlog->exponentiate(pk_received[0].get(), s0);
@@ -209,11 +213,11 @@ int main(int argc, char* argv[]){
 
         // Encrypt m1
         //Generate s1 and t1
-        shared_ptr<PrgFromOpenSSLAES> gen = get_seeded_prg();
-        biginteger s1 = getRandomInRange(0, p-1, gen.get());
-        biginteger t1 = getRandomInRange(0, p-1, gen.get());
+        shared_ptr<PrgFromOpenSSLAES> gen_encm1 = get_seeded_prg();
+        biginteger s1 = getRandomInRange(0, p-1, gen_encm1.get());
+        biginteger t1 = getRandomInRange(0, p-1, gen_encm1.get());
         // define u1
-        auto g1_s1 = dlog->exponentiate(crs_sent[1].get(), s1);
+        auto g1_s1 = dlog->exponentiate(crs_sent[2].get(), s1);
         auto h1_t1 = dlog->exponentiate(crs_sent[3].get(), t1);
         auto u1 = dlog->multiplyGroupElements(g1_s1.get(), h1_t1.get());
         //define v1
@@ -231,8 +235,14 @@ int main(int argc, char* argv[]){
             channel->writeWithSize(elem_sendStr);
         }
 
-        cout << "\nMy first message, m0: " << m0.get();
-        cout << "\nMy second message, m1: " << m1.get();
+        auto ele0 = m0.get();
+        ECElement * ECele0 = (ECElement*) ele0;
+        biginteger test_int0 = ECele0->getX();
+        cout << "\nMy first message, m0: " << test_int0;
+        auto ele1 = m1.get();
+        ECElement * ECele1 = (ECElement*) ele1;
+        biginteger test_int1 = ECele1->getX();
+        cout << "\nMy second message, m1: " << test_int1;
     
     }
 
@@ -253,15 +263,23 @@ int main(int argc, char* argv[]){
             Y_received.push_back(Y_elem);
         }
 
-        int sigma = atoi(argv[1]);
+        int sigma = atoi(argv[2]);
 
         auto usig = Y_received[2 * sigma];
         auto vsig_msig = Y_received[2 * sigma + 1];
 
         auto vsig_computed = dlog->exponentiate(usig.get(), r);
-        auto msig = dlog->multiplyGroupElements(vsig_msig.get(), vsig_computed.get());
+        auto vsig_comp_inverse = dlog->getInverse(vsig_computed.get());
+        auto msig = dlog->multiplyGroupElements(vsig_msig.get(), vsig_comp_inverse.get());
 
-        cout << "\nMy chosen element is: " << msig.get();
+        // biginteger r1 = *((biginteger *)result->getX().get());
+        // cout << "\nMy chosen element is: " << msig.get();
+        //biginteger test = ((ECElement*)&msig)->getY();
+        auto ele = msig.get();
+        ECElement * ECele = (ECElement*) ele;
+        biginteger test_int = ECele->getX();
+        cout << "\nMy chosen element is: " << test_int;
+        
 
     }
     
