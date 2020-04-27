@@ -42,6 +42,8 @@ int main(int argc, char* argv[]){
     shared_ptr<GroupElement> h0;
     shared_ptr<GroupElement> h1;
     **/
+    biginteger r;
+
     shared_ptr<GroupElement> g;
     shared_ptr<GroupElement> h;
 
@@ -236,16 +238,31 @@ int main(int argc, char* argv[]){
 
 
     // Final decryption
+    if(atoi(argv[1]) == 1){
+        // Receive Y
+        vector<shared_ptr<GroupElement>> Y_received;
+        for (int i=0; i < 4; i++){
+            shared_ptr<GroupElement> Y_elem;
+            shared_ptr<GroupElementSendableData> Y_elem_receivable = make_shared<ECElementSendableData>(dlog->getOrder(), dlog->getOrder());
+            //shared_ptr<GroupElementSendableData> pk_elem_receivable = make_shared<ZpElementSendableData>(dlog->getOrder());
+            vector<byte> raw_Y_elem;
+            channel->readWithSizeIntoVector(raw_Y_elem);
+            Y_elem_receivable->initFromByteVector(raw_Y_elem);
+            Y_elem = dlog->reconstructElement(true, Y_elem_receivable.get());
 
+            Y_received.push_back(Y_elem);
+        }
 
+        int sigma = atoi(argv[1]);
 
-    if(atoi(argv[1]) == 0){
-        channel->write((byte*) "\nTyphon, please behave yourself...\n", 100);
-        cout << "\nMessage sent to Typhon\n";
-    } else {
-        byte* helloTyphon = new byte[100];
-        channel->read(helloTyphon, 100);
-        cout << helloTyphon;
+        auto usig = Y_received[2 * sigma];
+        auto vsig_msig = Y_received[2 * sigma + 1];
+
+        auto vsig_computed = dlog->exponentiate(usig.get(), r);
+        auto msig = dlog->multiplyGroupElements(vsig_msig.get(), vsig_computed.get());
+
+        cout << "\nMy chosen element is: " << msig.get();
+
     }
     
 
