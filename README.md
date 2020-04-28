@@ -11,5 +11,16 @@ There are two possible setup modes:
   o Sender'security: computational
 
 
+In order to run:
+
+compile by:
+
+g++ conn.cpp -I/home/manel -I/home/manel/boost_1_71_0 -std=c++11 libscapi.a -lboost_system -L/home/manel/boost_1_71_0/stage/lib -lssl -lcrypto -lgmp -g -pthread
+
+run in terminal 1
+./a.out 0 0
+
+run in terminal 2
+./a.out 1 1
 
 
