@@ -1,7 +1,7 @@
 #include "Postman.hpp"
 
 // Send vector of EC group elements to receiver
-void Postman::send_vec_ecelement(shared_ptr<CommParty> channel, vector<shared_ptr<GroupElement>> vec_ecelem){
+void send_vec_ecelement(shared_ptr<CommParty> channel, vector<shared_ptr<GroupElement>> vec_ecelem){
  
     for (shared_ptr<GroupElement> ecelem : vec_ecelem){
         auto ecelem_sendable = ecelem->generateSendableData();
@@ -12,7 +12,7 @@ void Postman::send_vec_ecelement(shared_ptr<CommParty> channel, vector<shared_pt
 }
 
 // Receive vector of EC group elements from sender
-vector<shared_ptr<GroupElement>> Postman::receive_vec_ecelement(vector<shared_ptr<GroupElement>> vec_ecelem, int size, DlogGroup* dlog){
+vector<shared_ptr<GroupElement>> receive_vec_ecelement(shared_ptr<CommParty> channel, DlogGroup* dlog, int size){
 
      vector<shared_ptr<GroupElement>> vec_ecelem;
 

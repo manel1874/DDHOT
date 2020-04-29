@@ -1,7 +1,11 @@
+#pragma once
+
 #include "Postman.hpp"
 
 class SenderParty {
 private:
+
+    shared_ptr<CommParty> channel;
 
     DlogGroup* dlog;
 
@@ -15,18 +19,20 @@ public:
 
     SenderParty(int argc, char* argv[]);
 
-    vector<shared_ptr<GroupElement>> SenderParty::genMessySetUp(DlogGroup* dlog, biginteger p);
+    vector<shared_ptr<GroupElement>> genMessySetUp(DlogGroup* dlog, biginteger p);
 
-    vector<shared_ptr<GroupElement>> SenderParty::genDecSetUp(DlogGroup* dlog, biginteger p);
+    vector<shared_ptr<GroupElement>> genDecSetUp(DlogGroup* dlog, biginteger p);
 
     void run();
 
-    shared_ptr<GroupElement> SenderParty::encryptMessage(biginteger p, int message_number, shared_ptr<GroupElement> mi);
+    shared_ptr<GroupElement> encryptMessage(biginteger p, int message_number, shared_ptr<GroupElement> mi);
 
 };
 
 class ReceiverParty {
 private:
+
+    shared_ptr<CommParty> channel;
 
     int sigma;
 

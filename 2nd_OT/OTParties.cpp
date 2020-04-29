@@ -8,6 +8,17 @@
 // ================================ //
 
 SenderParty::SenderParty(int argc, char* argv[]){
+    
+    
+    // ++++++++++++++++++++++++++++ //
+    //         Group Setup          //
+    // ++++++++++++++++++++++++++++ //
+
+    DlogGroup* dlog = new OpenSSLDlogECF2m("include/configFiles/NISTEC.txt", "K-233");
+    //auto dlog = make_shared<OpenSSLDlogZpSafePrime>(128);
+    biginteger p = dlog->getOrder();
+    cout << "\nOrder is: " << p << "\n";
+
 
     // ++++++++++++++++++++++++++++ //
     //          OT inputs           //
@@ -41,20 +52,10 @@ SenderParty::SenderParty(int argc, char* argv[]){
     senderParty = SocketPartyData(boost_ip::address::from_string("127.0.0.1"), 8000);
     receiverParty = SocketPartyData(boost_ip::address::from_string("127.0.0.1"), 8001);
 	
-    shared_ptr<CommParty> channel = make_shared<CommPartyTCPSynced>(io_service, senderParty, receiverParty);
+    channel = make_shared<CommPartyTCPSynced>(io_service, senderParty, receiverParty);
     // connect to party one
     channel->join(500, 5000);
     cout<<"channel established"<<endl;
-
-
-    // ++++++++++++++++++++++++++++ //
-    //         Group Setup          //
-    // ++++++++++++++++++++++++++++ //
-
-    DlogGroup* dlog = new OpenSSLDlogECF2m("include/configFiles/NISTEC.txt", "K-233");
-    //auto dlog = make_shared<OpenSSLDlogZpSafePrime>(128);
-    biginteger p = dlog->getOrder();
-    cout << "\nOrder is: " << p << "\n";
 
 
     // ++++++++++++++++++++++++++++ //
@@ -63,17 +64,17 @@ SenderParty::SenderParty(int argc, char* argv[]){
 
     if(atoi(argv[2]) == 0){ // setup Messy mode
         
-        crs_sent = SenderParty::genMessySetUp(dlog, p);
+        crs_sent = genMessySetUp(dlog, p);
 
         // Send vector group element to receiver
-        send_vec_ecelement(crs_sent);
+        send_vec_ecelement(channel, crs_sent);
 
     } else { // setup Decryption mode 
         
         crs_sent = SenderParty::genDecSetUp(dlog, p);
         
         // Send vector group element to receiver
-        send_vec_ecelement(crs_sent);
+        send_vec_ecelement(channel, crs_sent);
 
     }
 
@@ -85,8 +86,8 @@ void SenderParty::run() {
     // ++++++++++++++++++++++++++++ //
     //          Receive pk          //
     // ++++++++++++++++++++++++++++ //
-    
-    pk_received = receive_vec_ecelement(2);
+
+    pk_received = receive_vec_ecelement(channel, dlog, 2);
 
 
     // ++++++++++++++++++++++++++++ //
@@ -102,8 +103,13 @@ void SenderParty::run() {
     //         Send y0, y1          //
     // ++++++++++++++++++++++++++++ //
 
-    shared_ptr<GroupElement> Y[4] = {u0, v0_m0, u1, v1_m1};
-    send_vec_ecelement(Y);
+    vector<shared_ptr<GroupElement>> Y;
+    Y.push_back(u0);
+    Y.push_back(v0_m0);
+    Y.push_back(u1);
+    Y.push_back(v1_m1);
+
+    send_vec_ecelement(channel, Y);
 
 }
 
@@ -142,7 +148,7 @@ vector<shared_ptr<GroupElement>> SenderParty::genDecSetUp(DlogGroup* dlog, bigin
     
     auto g0 = dlog->createRandomGenerator();
 
-    biginteger p = dlog->getOrder();
+    p = dlog->getOrder();
 
     // generate two random elements in Zp
     shared_ptr<PrgFromOpenSSLAES> gen = get_seeded_prg();
@@ -209,7 +215,7 @@ ReceiverParty::ReceiverParty(int argc, char* argv[]) {
     senderParty = SocketPartyData(boost_ip::address::from_string("127.0.0.1"), 8000);
     receiverParty = SocketPartyData(boost_ip::address::from_string("127.0.0.1"), 8001);
 	
-    shared_ptr<CommParty> channel = make_shared<CommPartyTCPSynced>(io_service, receiverParty, senderParty);
+    channel = make_shared<CommPartyTCPSynced>(io_service, receiverParty, senderParty);
     // connect to party one
     channel->join(500, 5000);
     cout<<"channel established"<<endl;
@@ -227,7 +233,7 @@ ReceiverParty::ReceiverParty(int argc, char* argv[]) {
     //          CRS Setup           //
     // ++++++++++++++++++++++++++++ //    
 
-    crs_received = receive_vec_ecelement(4);
+    crs_received = receive_vec_ecelement(channel, dlog, 4);
 
 }
 
@@ -250,16 +256,18 @@ void ReceiverParty::run() {
     // ++++++++++++++++++++++++++++ //
     //           Send pk            //
     // ++++++++++++++++++++++++++++ //
-    shared_ptr<GroupElement> pk[2] = {g, h};
+    vector<shared_ptr<GroupElement>> pk;
+    pk.push_back(g);
+    pk.push_back(h);
 
-    send_vec_ecelement(pk);
+    send_vec_ecelement(channel, pk);
 
 
     // ++++++++++++++++++++++++++++ //
     //        Receive y0, y1        //
     // ++++++++++++++++++++++++++++ //
 
-    vector<shared_ptr<GroupElement>> Y_received = receive_vec_ecelement(4);
+    vector<shared_ptr<GroupElement>> Y_received = receive_vec_ecelement(channel, dlog, 4);
 
     auto usig = Y_received[2 * sigma];
     auto vsig_msig = Y_received[2 * sigma + 1];
