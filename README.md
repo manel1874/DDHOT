@@ -11,7 +11,7 @@ There are two possible setup modes:
   o Sender'security: computational
 
 
-In order to run:
+In order to run 1st_OT.cpp:
 
 compile by:
 
@@ -23,4 +23,14 @@ run in terminal 1
 run in terminal 2
 ./a.out 1 1
 
+
+In order to run the working_buggy_modular_version
+
+run make
+
+run in terminal 1
+./runOT.out 0 0
+
+run in terminal 2
+./runOT.out 1 1
 
