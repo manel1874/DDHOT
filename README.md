@@ -1,36 +1,56 @@
-# DDHOT
-Implementation of OT under DDH assumption based on the following work: "A Framework for Efficient and Composable Oblivious Transfer"
+# Oblivious Transfer
 
-There are two possible setup modes:
+Installation instruction:
 
-- SetupMessy:
-  o Receiver'security: computational
-  o Sender's security: statistical
-- SetupDec:
-  o Receiver's security: statistical
-  o Sender'security: computational
+- In your home directory type:
+
+'''
+
+git clone https://github.com/manel1874/DDHOT.git
+'''
+
+- Install libscapi using dev branch: https://github.com/cryptobiu/libscapi/tree/dev. In case it does not compile, please follow the instructions in README_libscapi.md.
+
+- Copy the elements inside Final\_version\_working to libscapi folder:
+
+'''
+cd
+
+cp -r DDHOT/Final_version_working libscapi
+
+'''
+
+- Update your current home directory in the makefile file. (ex. change manel to your username)
+
+- Run:
+
+'''
+cd ~/libsacpi
+'''
+
+'''
+make
+'''
+
+- Run in separate terminals:
+
+'''
+./runOT 0 0
+'''
+
+'''
+./runOT 1 1
+'''
+
+- The first input corresponds to the party type (0: Sender; 1: Receiver);
+- For a Sender Party the second input corresponds to the crs setup type (0: Messy mode; 1: Decryption mode);
+- For a Receiver Party the second input corresponds to the chosen element, sigma (0: m0, 1: m1).
 
 
-In order to run 1st_OT.cpp:
-
-compile by:
-
-g++ conn.cpp -I/home/manel -I/home/manel/boost_1_71_0 -std=c++11 libscapi.a -lboost_system -L/home/manel/boost_1_71_0/stage/lib -lssl -lcrypto -lgmp -g -pthread
-
-run in terminal 1
-./a.out 0 0
-
-run in terminal 2
-./a.out 1 1
 
 
-In order to run the working_buggy_modular_version
 
-run make
 
-run in terminal 1
-./runOT.out 0 0
 
-run in terminal 2
-./runOT.out 1 1
+
 
