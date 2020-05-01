@@ -1,5 +1,7 @@
 # Oblivious Transfer
 
+Implementation of UCOT under DDH assumption based on the following work: "A Framework for Efficient and Composable Oblivious Transfer" by Chris Peikert and Vinod Vaikuntanathan and Brent Waters.
+
 ## Installation instruction:
 
 - In your home directory type:
