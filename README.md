@@ -1,6 +1,6 @@
 # Oblivious Transfer
 
-Implementation of UCOT under DDH assumption based on the following work: "A Framework for Efficient and Composable Oblivious Transfer" by Chris Peikert and Vinod Vaikuntanathan and Brent Waters.
+Implementation of UC-secure Oblivous Transfer under DDH assumption based on the following work: "A Framework for Efficient and Composable Oblivious Transfer" by Chris Peikert and Vinod Vaikuntanathan and Brent Waters.
 
 ## Installation instruction:
 
@@ -12,22 +12,24 @@ $ git clone https://github.com/manel1874/DDHOT.git
 
 - Install libscapi using dev branch: https://github.com/cryptobiu/libscapi/tree/dev. In case it does not compile, please follow the instructions in README_libscapi.md.
 
-- Copy the elements inside Final\_version\_working to libscapi folder:
+- Copy the elements inside UC\_DDH\_OT to libscapi folder:
 
 ```
 $ cd
 
-$ cp -r DDHOT/Final_version_working libscapi
+$ cp -r DDHOT/UC_DDH_OT/. libscapi
 ```
 
 - Update your current home directory in the makefile file. (ex. change manel to your username)
+
+
 
 - Run:
 
 ```
 $ cd ~/libsacpi
 
-$ make
+$ make -f makefile_UCOT
 ```
 
 ## Run example
