@@ -28,7 +28,6 @@ int main(int argc, char* argv[]) {
     // ++++++++++++++++++++++++++++ //
 
     shared_ptr<OpenSSLDlogECF2m> dlog = make_shared<OpenSSLDlogECF2m>("include/configFiles/NISTEC.txt", "K-233");
-    //auto dlog = make_shared<OpenSSLDlogZpSafePrime>(128);
     biginteger p = dlog->getOrder();
     cout << "\nGroup order is: " << p << "\n";
 

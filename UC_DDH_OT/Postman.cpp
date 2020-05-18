@@ -19,6 +19,7 @@ void send_vec_ecelement(const shared_ptr<CommParty> & this_channel, vector<share
     
 }
 
+// Send int to receiver
 void send_int(const shared_ptr<CommParty> & this_channel, int msg){
 
     string msg_string = to_string(msg);
@@ -48,6 +49,7 @@ vector<shared_ptr<GroupElement>> receive_vec_ecelement(const shared_ptr<CommPart
 
 }
 
+// Receive int from sender
 int receive_int(const shared_ptr<CommParty> & channel){
 
     string str_msg;

@@ -3,11 +3,61 @@
 #include "OTParties.hpp"
 
 
-// ================================ //
-//                                  //
-//              Sender              //   
-//                                  //
-// ================================ //
+// ================================================================ //
+//                                                                  //
+//                            Protocol                              //   
+//                                                                  //
+// ================================================================ //
+
+/**
+ * 
+ * 
+ * Sender:
+ *      o Input: m0, m1
+ *      o Output: Nothing
+ * 
+ * Receiver:
+ *      o Input: sigma \in {0, 1}
+ *      o Output: m_sigma
+ * 
+ * PROTOCOL:
+ * 
+ * Sender:
+ * S1. Queries and gets crs = (g0, h0, g1, h1)
+ * 
+ * Receiver:
+ * R1. Queries and gets crs = (g0, h0, g1, h1)
+ * R2. (pk, sk) <- keyGen(crs, sigma)
+ *      R2.1 r <- Zq
+ *      R2.2 g = g_sigma ^ r; h = h_sigma ^ r
+ *      R2.3 pk = (g, h); sk = r
+ * R3. R sends pk to S
+ * 
+ * Sender:
+ * S2. Computes:
+ *      S2.1 y0 = Enc(pk, 0, m0); y1 = Enc(pk, 1, m1)
+ *      
+ *      si <- Zq; ti <- Zq
+ *      yi  = DDHEnc(pk_i, mi)
+ *          = ( gi^si hi^ti, ( g_sigma^si h_sigma^ti )^r.mi )
+ *          = (ui, vi.mi)
+ * 
+ *      for pk_i = (hi, hi, g_sigma^r, h_sigma^r)  and  i \in {0, 1}
+ * 
+ * S3. S sends Y = (y0, y1) to R
+ * 
+ * Receiver:
+ * R4. Decrypt m_sigma: y_sigma[0]^r / y_sigma[1]
+ * 
+ * 
+ * **/
+
+
+// ================================================================ //
+//                                                                  //
+//                            Sender                                //   
+//                                                                  //
+// ================================================================ //
 
 SenderParty::SenderParty(const shared_ptr<CommParty> & channel, const shared_ptr<DlogGroup> & dlog, int crs_setup_type){
     
@@ -38,18 +88,14 @@ SenderParty::SenderParty(const shared_ptr<CommParty> & channel, const shared_ptr
     // ++++++++++++++++++++++++++++ //
     //          CRS Setup           //
     // ++++++++++++++++++++++++++++ //
+    /**
+     * S1. Queries and gets crs = (g0, h0, g1, h1)
+     * **/
 
     if(crs_setup_type == 0){ // setup Messy mode
         cout << "\nUsing Messy mode\n";
 
-        // Generate crs
-        /*
-        vector<shared_ptr<GroupElement>> crs;
-        crs = genMessySetUp();
-        this->crs_sent = crs;
-        */
-
-        // Set crs
+        // Set messy crs
         vector<shared_ptr<GroupElement>> crs;
         crs = messySetUp(dlog);
         this->crs_sent = crs;
@@ -59,14 +105,7 @@ SenderParty::SenderParty(const shared_ptr<CommParty> & channel, const shared_ptr
     } else { // setup Decryption mode 
         cout << "\nUsing Decryption mode\n";
 
-        // Generate crs
-        /*
-        vector<shared_ptr<GroupElement>> crs;
-        crs = genDecSetUp();
-        this->crs_sent = crs;
-        */
-
-        // Set crs
+        // Set decryption crs
         vector<shared_ptr<GroupElement>> crs;
         crs = decSetUp(dlog);
         this->crs_sent = crs;
@@ -86,28 +125,38 @@ void SenderParty::run(const shared_ptr<CommParty> & channel) {
     
     vector<shared_ptr<GroupElement>> pk;
     pk = receive_vec_ecelement(channel, this->dlog, 2);
-
-    //this->g = pk_received[0];
-    //this->h = pk_received[1];
-
     this->pk_received = pk;
 
     
     // ++++++++++++++++++++++++++++ //
     //       m0, m1 Encryption      //
     // ++++++++++++++++++++++++++++ //
+    /**
+    * S2. Computes:
+    *      S2.1 y0 = Enc(pk, 0, m0); y1 = Enc(pk, 1, m1)
+    *      
+    *      si <- Zq; ti <- Zq
+    *      yi  = DDHEnc(pk_i, mi)
+    *          = ( gi^si hi^ti, ( g_sigma^si h_sigma^ti )^r.mi )
+    *          = (ui, vi.mi)
+    * 
+    *      for pk_i = (hi, hi, g_sigma^r, h_sigma^r)  and  i \in {0, 1}
+    * **/
 
     biginteger p = dlog->getOrder();
-
     
     vector<shared_ptr<GroupElement>> u0__v0_m0;
     u0__v0_m0 = encryptMessage(0, m0); // = y0 
     vector<shared_ptr<GroupElement>> u1__v1_m1; 
     u1__v1_m1 = encryptMessage(1, m1); // = y1
 
+
     // ++++++++++++++++++++++++++++ //
     //         Send y0, y1          //
     // ++++++++++++++++++++++++++++ //
+    /**
+     * S3. S sends Y = (y0, y1) to R
+     * **/
     
     vector<shared_ptr<GroupElement>> Y;
     shared_ptr<GroupElement> u0 = u0__v0_m0[0];
@@ -115,7 +164,6 @@ void SenderParty::run(const shared_ptr<CommParty> & channel) {
     shared_ptr<GroupElement> u1 = u1__v1_m1[0];
     shared_ptr<GroupElement> v1_m1 = u1__v1_m1[1];
     
-
     Y.push_back(u0);
     Y.push_back(v0_m0);
     Y.push_back(u1);
@@ -159,25 +207,23 @@ vector<shared_ptr<GroupElement>> SenderParty::encryptMessage(int message_number,
 }
 
 
-// ================================ //
-//                                  //
-//              Receiver            //   
-//                                  //
-// ================================ //
+// ================================================================ //
+//                                                                  //
+//                            Receiver                              //   
+//                                                                  //
+// ================================================================ //
 
 ReceiverParty::ReceiverParty(const shared_ptr<CommParty> & channel, const shared_ptr<DlogGroup> & dlog, int sigma) {
 
     this->sigma = sigma;
     this->dlog = dlog;
-
-    /*
-    vector<shared_ptr<GroupElement>> crs;
-    crs = receive_vec_ecelement(channel, dlog, 4);
-    */
     
     // ++++++++++++++++++++++++++++ //
     //          CRS Setup           //
     // ++++++++++++++++++++++++++++ //
+    /**
+     * R1. Queries and gets crs = (g0, h0, g1, h1)
+     * **/
 
     int crs_setup_type;
     crs_setup_type = receive_int(channel);
@@ -185,14 +231,7 @@ ReceiverParty::ReceiverParty(const shared_ptr<CommParty> & channel, const shared
     if(crs_setup_type == 0){ // setup Messy mode
         cout << "\nUsing Messy mode\n";
 
-        // Generate crs
-        /*
-        vector<shared_ptr<GroupElement>> crs;
-        crs = genMessySetUp();
-        this->crs_sent = crs;
-        */
-
-        // Set crs
+        // Set messy crs
         vector<shared_ptr<GroupElement>> crs;
         crs = messySetUp(dlog);
         this->crs_received = crs;
@@ -200,21 +239,12 @@ ReceiverParty::ReceiverParty(const shared_ptr<CommParty> & channel, const shared
     } else { // setup Decryption mode 
         cout << "\nUsing Decryption mode\n";
 
-        // Generate crs
-        /*
-        vector<shared_ptr<GroupElement>> crs;
-        crs = genDecSetUp();
-        this->crs_sent = crs;
-        */
-
-        // Set crs
+        // Set decryption crs
         vector<shared_ptr<GroupElement>> crs;
         crs = decSetUp(dlog);
         this->crs_received = crs;
 
     }
-
-
 
 }
 
@@ -225,6 +255,13 @@ void ReceiverParty::run(const shared_ptr<CommParty> & channel) {
     // ++++++++++++++++++++++++++++ //
     //        Key Generation        //
     // ++++++++++++++++++++++++++++ //
+    /**
+     * R2. (pk, sk) <- keyGen(crs, sigma)
+     *      R2.1 r <- Zq
+     *      R2.2 g = g_sigma ^ r; h = h_sigma ^ r
+     *      R2.3 pk = (g, h); sk = r
+     * **/
+
 
     biginteger p = dlog->getOrder();
 
@@ -240,6 +277,9 @@ void ReceiverParty::run(const shared_ptr<CommParty> & channel) {
     // ++++++++++++++++++++++++++++ //
     //           Send pk            //
     // ++++++++++++++++++++++++++++ //
+    /**
+     * R3. R sends pk to S
+     * **/
     
     vector<shared_ptr<GroupElement>> pk;
     pk.push_back(g);
@@ -251,15 +291,14 @@ void ReceiverParty::run(const shared_ptr<CommParty> & channel) {
     // ++++++++++++++++++++++++++++ //
     //        Receive y0, y1        //
     // ++++++++++++++++++++++++++++ //
+    /**
+     * R4. Decrypt m_sigma: y_sigma[0]^r / y_sigma[1]
+     * **/
 
     vector<shared_ptr<GroupElement>> Y_received = receive_vec_ecelement(channel, dlog, 4);
 
-    
-
     auto usig = Y_received[2 * sigma];
     auto vsig_msig = Y_received[2 * sigma + 1];
-
-    
 
     auto vsig_computed = dlog->exponentiate(usig.get(), r);
     auto vsig_comp_inverse = dlog->getInverse(vsig_computed.get());
@@ -271,7 +310,6 @@ void ReceiverParty::run(const shared_ptr<CommParty> & channel) {
     // ++++++++++++++++++++++++++++ //
 
     cout << "\nMy chosen element, m_sigma = " << msig->generateSendableData()->toString() << endl;
-    
     
 }
 
