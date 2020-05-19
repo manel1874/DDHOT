@@ -43,7 +43,7 @@ $ ./runOT 0 0
 
 Terminal 2
 ```
-./runOT 1 1
+$ ./runOT 1 1
 ```
 
 - The first input corresponds to the party type (0: Sender; 1: Receiver);
