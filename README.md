@@ -1,10 +1,8 @@
 # Oblivious Transfer
 
-Implementation of UC-secure Oblivous Transfer under DDH assumption based on the following work: "A Framework for Efficient and Composable Oblivious Transfer" by Chris Peikert and Vinod Vaikuntanathan and Brent Waters.
+Implementation of UC-secure Oblivous Transfer under DDH assumption based on the following work: "A Framework for Efficient and Composable Oblivious Transfer" by Chris Peikert and Vinod Vaikuntanathan and Brent Waters. A demo can be seen on  [YouTube](https://youtu.be/-AY9qeqqhjcm).
 
 ## Installation instruction:
-
-A demo can be seen on  [YouTube](https://youtu.be/-AY9qeqqhjcm)
 
 - In your home directory type:
 
