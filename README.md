@@ -4,6 +4,8 @@ Implementation of UC-secure Oblivous Transfer under DDH assumption based on the 
 
 ## Installation instruction:
 
+A demo can be seen on  [YouTube](https://youtu.be/-AY9qeqqhjcm)
+
 - In your home directory type:
 
 ```
